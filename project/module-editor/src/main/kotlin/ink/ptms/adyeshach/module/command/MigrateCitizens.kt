@@ -13,6 +13,7 @@ import org.bukkit.entity.*
 import org.bukkit.inventory.EquipmentSlot
 import taboolib.common.platform.function.info
 import taboolib.common.platform.function.warning
+import ink.ptms.adyeshach.util.getPropertiesCompat
 
 /**
  * @author sky
@@ -131,8 +132,8 @@ object MigrateCitizens {
             }
             if (entity is AdyHuman && citizenEntity is Player) {
                 val skin = if (citizenEntity is SkinnableEntity) citizenEntity else NMS.getSkinnable(citizenEntity)
-                if (skin != null && !skin.profile.properties.isEmpty) {
-                    val property = skin.profile.properties.entries().first().value
+                if (skin != null && !getPropertiesCompat(skin.profile).isEmpty) {
+                    val property = getPropertiesCompat(skin.profile).entries().first().value
                     entity.setName(npc.name)
                     entity.setTexture(property.value, property.signature)
                 }

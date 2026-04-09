@@ -11,6 +11,7 @@ import ink.ptms.adyeshach.impl.nms.specific.NMS19
 import org.bukkit.entity.Player
 import taboolib.module.nms.MinecraftVersion
 import java.util.*
+import ink.ptms.adyeshach.util.getPropertiesCompat
 
 /**
  * Adyeshach
@@ -94,7 +95,7 @@ class DefaultMinecraftEntityPlayerHandler : MinecraftEntityPlayerHandler {
         // GameProfile
         writeUUID(uuid)
         writeUtf(gameProfile.name, 16)
-        writeGameProfileProperties(gameProfile.toMojang(uuid).properties)
+        writeGameProfileProperties(getPropertiesCompat(gameProfile.toMojang(uuid)))
         // GameMode
         writeVarInt(if (gameProfile.spectator) 3 else 1)
         // Ping

@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose
 import com.mojang.authlib.properties.Property
 import taboolib.module.nms.MinecraftVersion
 import java.util.*
+import ink.ptms.adyeshach.util.getPropertiesCompat
 
 /**
  * @author sky
@@ -56,7 +57,7 @@ class GameProfile {
         val mojangProfile = com.mojang.authlib.GameProfile(uuid, name)
         // 如果有皮肤则添加皮肤
         if (texture.size == 2) {
-            mojangProfile.properties.put("textures", Property("textures", texture[0], texture[1]))
+            getPropertiesCompat(mojangProfile).put("textures", Property("textures", texture[0], texture[1]))
         }
         return mojangProfile
     }

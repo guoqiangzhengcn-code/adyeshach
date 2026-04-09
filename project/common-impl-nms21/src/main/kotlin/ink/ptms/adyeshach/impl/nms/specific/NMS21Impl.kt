@@ -45,15 +45,16 @@ import taboolib.library.reflex.Reflex.Companion.invokeConstructor
 import taboolib.module.nms.MinecraftVersion
 import taboolib.module.nms.createDataSerializer
 import java.util.*
+import ink.ptms.adyeshach.util.getPropertiesCompat
 
 class NMS21Impl : NMS21 {
 
     override fun getProperties(uuid: UUID, gameProfile: ink.ptms.adyeshach.core.bukkit.data.GameProfile): com.mojang.authlib.properties.PropertyMap {
         val profile = GameProfile(uuid, gameProfile.name)
         if (gameProfile.texture.size == 2) {
-            profile.properties.put("textures", Property("textures", gameProfile.texture[0], gameProfile.texture[1]))
+            getPropertiesCompat(profile).put("textures", Property("textures", gameProfile.texture[0], gameProfile.texture[1]))
         }
-        return profile.properties
+        return getPropertiesCompat(profile)
     }
 
 
