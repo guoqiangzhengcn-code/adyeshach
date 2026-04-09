@@ -22,6 +22,7 @@ import org.bukkit.util.Vector
 import taboolib.common.platform.function.warning
 import taboolib.library.reflex.Reflex.Companion.getProperty
 import taboolib.module.nms.MinecraftVersion
+import taboolib.module.nms.versionAdaptor
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -168,41 +169,52 @@ class DefaultMinecraftHelper : MinecraftHelper {
         return CraftChatMessage16.fromString(message)[0]
     }
 
-    override fun isChunkVisible(player: Player, chunkX: Int, chunkZ: Int): Boolean {
-        if (isChunkCheckError) {
-            return false
-        }
+    // 版本适配：isChunkVisible 的实现策略
+    // 首次调用时通过 try-catch 确定可用的 NMS API，后续直接调用缓存的实现
+    val chunkVisibleImpl = versionAdaptor<(Player, Int, Int) -> Boolean>(
         // 你改你妈个🥚，我爱说实话
-        try {
-            return NMS20p.instance.isChunkSent(player, chunkX, chunkZ)
-        } catch (_: Throwable) {
-        }
+        { { player, chunkX, chunkZ -> NMS20p.instance.isChunkSent(player, chunkX, chunkZ) } },
         // 你改你妈个🥚，我爱说实话
-        try {
-            val craftWorld = player.world as CraftWorld19
-            return NMS19p.instance.isChunkSent(player, craftWorld.handle, chunkX, chunkZ)
-        } catch (_: Throwable) {
-        }
-        return try {
-            if (MinecraftVersion.versionId >= 12101) {
-                (player.world as CraftWorld19).isChunkLoaded(chunkX, chunkZ)
+{
+            val test = CraftWorld19::class.java
+            { player, chunkX, chunkZ ->
+                // 缝合点：保留了 1.21 分支对高版本的检测逻辑
+                if (MinecraftVersion.versionId >= 12101) {
+                    (player.world as CraftWorld19).isChunkLoaded(chunkX, chunkZ)
+                } else {
+                    val craftWorld = player.world as CraftWorld19
+                    NMS19p.instance.isChunkSent(player, craftWorld.handle.chunkSource.chunkMap, chunkX, chunkZ)
+                }
             }
+        },
+        {
             // 从 1.18 开始 getVisibleChunk  -> getVisibleChunkIfPresent
-            //             getChunkProvider -> getChunkSource
-            else if (MinecraftVersion.isHigherOrEqual(MinecraftVersion.V1_18)) {
-                val craftWorld = player.world as CraftWorld19
-                craftWorld.handle.chunkSource.chunkMap.visibleChunkMap.get(ChunkPos.asLong(chunkX, chunkZ)) != null
+            //              getChunkProvider -> getChunkSource
+            if (MinecraftVersion.isHigherOrEqual(MinecraftVersion.V1_18)) {
+                { player, chunkX, chunkZ ->
+                    val craftWorld = player.world as CraftWorld19
+                    craftWorld.handle.chunkSource.chunkMap.visibleChunkMap.get(ChunkPos.asLong(chunkX, chunkZ)) != null
+                }
+            } else if (MinecraftVersion.isHigherOrEqual(MinecraftVersion.V1_14)) {
+                // 从 1.14 开始，PlayerChunkMap 改版
+                { player, chunkX, chunkZ ->
+                    val craftWorld = player.world as CraftWorld16
+                    craftWorld.handle.chunkProvider.playerChunkMap.getVisibleChunk(ChunkPos.asLong(chunkX, chunkZ)) != null
+                }
+            } else {
+                // 早期版本
+                { player, chunkX, chunkZ ->
+                    val craftWorld = player.world as CraftWorld12
+                    craftWorld.handle.playerChunkMap.isChunkInUse(chunkX, chunkZ)
+                }
             }
-            // 从 1.14 开始，PlayerChunkMap 改版
-            else if (MinecraftVersion.isHigherOrEqual(MinecraftVersion.V1_14)) {
-                val craftWorld = player.world as CraftWorld16
-                craftWorld.handle.chunkProvider.playerChunkMap.getVisibleChunk(ChunkPos.asLong(chunkX, chunkZ)) != null
+        }
             }
-            // 早期版本
-            else {
-                val craftWorld = player.world as CraftWorld12
-                craftWorld.handle.playerChunkMap.isChunkInUse(chunkX, chunkZ)
-            }
+
+    override fun isChunkVisible(player: Player, chunkX: Int, chunkZ: Int): Boolean {
+        if (isChunkCheckError) return false
+        return try {
+            chunkVisibleImpl()(player, chunkX, chunkZ)
         } catch (ex: Throwable) {
             isChunkCheckError = true
             warning("Unable to check chunk visibility. Please report this issue to the developer.")

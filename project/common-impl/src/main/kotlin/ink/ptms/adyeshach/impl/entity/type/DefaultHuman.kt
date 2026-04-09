@@ -79,11 +79,11 @@ abstract class DefaultHuman(entityTypes: EntityTypes) : DefaultEntityLiving(enti
                 // 创建玩家信息
                 addPlayerInfo(viewer)
                 // 生成实体
-                Adyeshach.api().getMinecraftAPI().getEntitySpawner().spawnNamedEntity(viewer, index, pid, position.toLocation())
+Adyeshach.api().getMinecraftAPI().getEntitySpawner().spawnNamedEntity(viewer, index, pid, clientPosition.toLocation())
                 try {
                     // 启用皮肤
                     setSkinEnabled(true)
-                }catch (_: IllegalStateException){
+                } catch (_: IllegalStateException) {
                 }
                 // 修复装备无法正常显示的问题
                 submit(delay = 1) {
