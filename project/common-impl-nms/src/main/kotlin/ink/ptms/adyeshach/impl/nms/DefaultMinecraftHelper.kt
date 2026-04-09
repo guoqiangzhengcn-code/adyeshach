@@ -202,14 +202,14 @@ class DefaultMinecraftHelper : MinecraftHelper {
                     craftWorld.handle.chunkProvider.playerChunkMap.getVisibleChunk(ChunkPos.asLong(chunkX, chunkZ)) != null
                 }
             } else {
-                // 早期版本
+               // 早期版本
                 { player, chunkX, chunkZ ->
                     val craftWorld = player.world as CraftWorld12
                     craftWorld.handle.playerChunkMap.isChunkInUse(chunkX, chunkZ)
                 }
             }
         }
-            }
+    )
 
     override fun isChunkVisible(player: Player, chunkX: Int, chunkZ: Int): Boolean {
         if (isChunkCheckError) return false
@@ -222,7 +222,7 @@ class DefaultMinecraftHelper : MinecraftHelper {
             false
         }
     }
-
+        {
     override fun toMinecraft(entity: Entity): Any {
         entity as CraftEntity9
         return entity.handle
